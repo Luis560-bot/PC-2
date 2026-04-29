@@ -1,4 +1,154 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Practica2.Data;
+using Practica2.Models;
+using Practica2.ViewModels;
+
+namespace Practica2.Controllers;
+
+[Authorize(Roles = "Coordinador")]
+public class CoordinadorController : Controller
+{
+    private readonly ApplicationDbContext _context;
+
+    public CoordinadorController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var cursos = await _context.Cursos.OrderBy(c => c.Nombre).ToListAsync();
+        return View(cursos);
+    }
+
+    public IActionResult Crear()
+    {
+        return View(new CursoCoordinadorFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Crear(CursoCoordinadorFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var curso = new Curso
+        {
+            Codigo = model.Codigo,
+            Nombre = model.Nombre,
+            Creditos = model.Creditos,
+            CupoMaximo = model.CupoMaximo,
+            HorarioInicio = model.HorarioInicio,
+            HorarioFin = model.HorarioFin,
+            Activo = true
+        };
+
+        _context.Cursos.Add(curso);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Editar(int id)
+    {
+        var curso = await _context.Cursos.FindAsync(id);
+        if (curso is null) return NotFound();
+
+        var model = new CursoCoordinadorFormViewModel
+        {
+            Id = curso.Id,
+            Codigo = curso.Codigo,
+            Nombre = curso.Nombre,
+            Creditos = curso.Creditos,
+            CupoMaximo = curso.CupoMaximo,
+            HorarioInicio = curso.HorarioInicio,
+            HorarioFin = curso.HorarioFin,
+            Activo = curso.Activo
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Editar(CursoCoordinadorFormViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var curso = await _context.Cursos.FindAsync(model.Id);
+        if (curso is null) return NotFound();
+
+        curso.Codigo = model.Codigo;
+        curso.Nombre = model.Nombre;
+        curso.Creditos = model.Creditos;
+        curso.CupoMaximo = model.CupoMaximo;
+        curso.HorarioInicio = model.HorarioInicio;
+        curso.HorarioFin = model.HorarioFin;
+        curso.Activo = model.Activo;
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Desactivar(int id)
+    {
+        var curso = await _context.Cursos.FindAsync(id);
+        if (curso is null) return NotFound();
+
+        curso.Activo = false;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Matriculas(int cursoId)
+    {
+        var curso = await _context.Cursos.FindAsync(cursoId);
+        if (curso is null) return NotFound();
+
+        var matriculas = await _context.Matriculas
+            .Include(m => m.Usuario)
+            .Where(m => m.CursoId == cursoId)
+            .OrderByDescending(m => m.FechaRegistro)
+            .ToListAsync();
+
+        var model = new MatriculasCursoCoordinadorViewModel
+        {
+            Curso = curso,
+            Matriculas = matriculas
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Confirmar(int id)
+    {
+        var matricula = await _context.Matriculas.FindAsync(id);
+        if (matricula is null) return NotFound();
+
+        matricula.Estado = EstadoMatricula.Confirmada;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Matriculas), new { cursoId = matricula.CursoId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cancelar(int id)
+    {
+        var matricula = await _context.Matriculas.FindAsync(id);
+        if (matricula is null) return NotFound();
+
+        matricula.Estado = EstadoMatricula.Cancelada;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Matriculas), new { cursoId = matricula.CursoId });
+    }
+}
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
