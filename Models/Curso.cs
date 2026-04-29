@@ -14,7 +14,7 @@ public class Curso : IValidatableObject
     [StringLength(150)]
     public string Nombre { get; set; } = string.Empty;
 
-    [Range(0, int.MaxValue, ErrorMessage = "No se aceptan creditos negativos.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Los créditos deben ser mayores a 0.")]
     public int Creditos { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "El cupo maximo debe ser mayor a 0.")]
@@ -30,17 +30,18 @@ public class Curso : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (Creditos < 0)
+        if (Creditos <= 0)
         {
             yield return new ValidationResult(
-                "No se aceptan creditos negativos.",
+                "Los créditos deben ser mayores a 0.",
                 new[] { nameof(Creditos) });
         }
 
-        if (HorarioFin < HorarioInicio)
+        // Requerimiento: HorarioInicio < HorarioFin
+        if (HorarioInicio >= HorarioFin)
         {
             yield return new ValidationResult(
-                "No se permite HorarioFin anterior a HorarioInicio.",
+                "HorarioInicio debe ser anterior a HorarioFin.",
                 new[] { nameof(HorarioInicio), nameof(HorarioFin) });
         }
     }

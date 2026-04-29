@@ -25,8 +25,9 @@ public class ApplicationDbContext : IdentityDbContext
             entity.Property(c => c.Nombre).HasMaxLength(150).IsRequired();
             entity.ToTable(t =>
             {
-                t.HasCheckConstraint("CK_Curso_Creditos", "\"Creditos\" >= 0");
-                t.HasCheckConstraint("CK_Curso_Horario", "\"HorarioInicio\" <= \"HorarioFin\"");
+                // Creditos must be > 0 and HorarioInicio < HorarioFin as required
+                t.HasCheckConstraint("CK_Curso_Creditos", "\"Creditos\" > 0");
+                t.HasCheckConstraint("CK_Curso_Horario", "\"HorarioInicio\" < \"HorarioFin\"");
             });
         });
 
