@@ -1,0 +1,42 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Rider
+.idea/
+
+# Node
+node_modules/
+
+# ASP.NET
+*.db
+*.log
+*.pdb
+*.dll
+*.exe
+
+# NuGet
+# packages folder
+**/packages/
+
+# Published output
+*/publish/
+
+# Others
+*.env
+*.DS_Store
+
+# Ignore embedded git repos directories
+Airware/
+EcoWarriorMVC/
+Gestion-de-monitereo-de-incidencias/bin/
+obj/
+*.user
+*.suo
+*.db-shm
+*.db-wal
